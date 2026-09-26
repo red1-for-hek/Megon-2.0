@@ -5,9 +5,35 @@ name: MEGON daily
 # runs a learn cycle, and commits the grown memory back. No server, no device,
 # no card. Public repos get unlimited Actions minutes.
 
+# ---------------------------------------------------------------------------
+# HOW OFTEN SHOULD THIS RUN?
+#
+# GitHub Actions cannot "restart when the previous run finishes" -- a cron
+# schedule is the only trigger it offers for unattended runs. So the question
+# is really: how often can you afford?
+#
+# PRIVATE repo (free plan) = 2000 minutes per month. One run costs ~10 min.
+#   every 30 min  ->  14400 min/month  BUSTS THE QUOTA in 4 days, then stops
+#   hourly        ->   7200 min/month  busts it in 8 days
+#   every 3 h     ->   2400 min/month  busts it in 25 days
+#   every 6 h     ->   1200 min/month  safe  <-- default below
+#   daily         ->    300 min/month  safe, very light
+#
+# PUBLIC repo = UNLIMITED minutes. If you make the repo public you can run
+# every 30 minutes forever at no cost. Your code would be visible to anyone,
+# but nothing here is secret.
+#
+# Change the cron line below, then commit. Nothing else needs editing.
+# ---------------------------------------------------------------------------
 on:
   schedule:
-    - cron: '17 3 * * *'      # 03:17 UTC daily -- offset from the top of the hour
+    # every 30 minutes -- fine on a PUBLIC repo (unlimited Actions minutes)
+    - cron: '*/30 * * * *'
+    #
+    # other options (uncomment ONE, comment the line above):
+    # - cron: '17 3 * * *'        # daily at 03:17 UTC  (9:17 AM Dhaka)
+    # - cron: '17 */3 * * *'      # every 3 hours  (needs ~2400 min/month)
+    # - cron: '*/30 * * * *'      # every 30 min   (PUBLIC repo only!)
   workflow_dispatch: {}        # ...or click "Run workflow" any time
   push:
     branches: [main]
@@ -70,7 +96,10 @@ jobs:
 
       - name: Learn from real open-source code
         run: |
-          python megon.py learn-code "string utilities" "json helpers" "text processing" --repos 2 || true
+          # The query must vary, or it reads the same three repos forever.
+          # Date-seeded rotation over the syllabus keeps it moving.
+          DAY=$(date -u +%j)
+          python megon.py learn-code --rotate "$DAY" --repos 2 || true
 
       # `agent --steps` explores; it does not self-develop. This step is what
       # grows MEGON's own grammar and commits the new primitives.
