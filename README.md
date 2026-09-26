@@ -1,4 +1,4 @@
-# MEGON I AI
+# MEGON i
 
 A self-deciding cognitive engine. It chooses its own next action, goes and gets
 what it needs from the open web and the open literature, writes it into
