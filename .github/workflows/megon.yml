@@ -28,7 +28,7 @@ name: MEGON daily
 on:
   schedule:
     # every 30 minutes -- fine on a PUBLIC repo (unlimited Actions minutes)
-    - cron: '*/30 * * * *'
+    - cron: '*/5 * * * *'
     #
     # other options (uncomment ONE, comment the line above):
     # - cron: '17 3 * * *'        # daily at 03:17 UTC  (9:17 AM Dhaka)
