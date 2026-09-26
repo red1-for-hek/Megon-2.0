@@ -1,0 +1,141 @@
+{
+  "name": "MEGON I AI",
+  "version": "1.0.0",
+  "budget": {
+    "mb_per_day": 6.0,
+    "max_docs_per_day": 40,
+    "minutes_per_cycle": 20,
+    "min_request_interval_s": 1.5,
+    "max_requests_per_min": 40,
+    "max_bytes_per_doc": 800000,
+    "request_timeout_s": 20,
+    "quiet_hours": [
+      23,
+      7
+    ]
+  },
+  "chunk": {
+    "target_tokens": 180,
+    "overlap_tokens": 30,
+    "min_tokens": 20
+  },
+  "retrieval": {
+    "top_k": 6,
+    "candidate_pool": 80,
+    "rrf_k": 60,
+    "dense_weight": 0.55,
+    "lexical_weight": 0.45,
+    "bm25_k1": 1.5,
+    "bm25_b": 0.75,
+    "lsa_dim": 256,
+    "rerank": true,
+    "title_boost": 0.12,
+    "freshness_boost": 0.03
+  },
+  "generation": {
+    "max_sentences": 5,
+    "template": "evidence_v2",
+    "cite": true
+  },
+  "policy": {
+    "respect_robots": true,
+    "block_private_network": true,
+    "allowlist": [],
+    "blocklist": [],
+    "illegal_content_floor": true,
+    "allow_exec": true,
+    "audit": true,
+    "user_agent": "MegonAI/1.0 (+local research agent; single operator; slow-crawl)"
+  },
+  "llm": {
+    "provider": "auto",
+    "base_url": "",
+    "model": "",
+    "api_key_env": "MEGON_LLM_KEY",
+    "max_tokens": 700,
+    "temperature": 0.2
+  },
+  "sources": [
+    {
+      "id": "fineweb-edu",
+      "kind": "hf",
+      "dataset": "HuggingFaceFW/fineweb-edu",
+      "config": "default",
+      "split": "train",
+      "text_field": "text",
+      "priority": 1.0,
+      "note": "1.3T-tok web corpus filtered for educational value (Llama-3 style pretraining mix)"
+    },
+    {
+      "id": "fineweb",
+      "kind": "hf",
+      "dataset": "HuggingFaceFW/fineweb",
+      "config": "default",
+      "split": "train",
+      "text_field": "text",
+      "priority": 0.8,
+      "note": "15T-token Common Crawl dump, deduped + filtered"
+    },
+    {
+      "id": "squad",
+      "kind": "hf",
+      "dataset": "rajpurkar/squad",
+      "config": "plain_text",
+      "split": "train",
+      "text_field": "context",
+      "qa": true,
+      "priority": 0.9,
+      "note": "SQuAD v1.1 reading comprehension (CC BY-SA 4.0)"
+    },
+    {
+      "id": "gsm8k",
+      "kind": "hf",
+      "dataset": "openai/gsm8k",
+      "config": "main",
+      "split": "train",
+      "text_field": "answer",
+      "math": true,
+      "priority": 0.9,
+      "note": "grade-school math reasoning (MIT)"
+    },
+    {
+      "id": "wikitext-2",
+      "kind": "hf",
+      "dataset": "Salesforce/wikitext",
+      "config": "wikitext-2-raw-v1",
+      "split": "train",
+      "text_field": "text",
+      "priority": 0.7,
+      "note": "WikiText-2 LM benchmark corpus"
+    },
+    {
+      "id": "alpaca",
+      "kind": "hf",
+      "dataset": "tatsu-lab/alpaca",
+      "config": "default",
+      "split": "train",
+      "text_field": "output",
+      "instruct": true,
+      "priority": 0.7,
+      "note": "instruction-following pairs (CC BY-NC 4.0)"
+    },
+    {
+      "id": "wikipedia-llm",
+      "kind": "url",
+      "url": "https://en.wikipedia.org/wiki/Large_language_model",
+      "priority": 0.6
+    },
+    {
+      "id": "wikipedia-transformer",
+      "kind": "url",
+      "url": "https://en.wikipedia.org/wiki/Transformer_(deep_learning_architecture)",
+      "priority": 0.6
+    }
+  ],
+  "schedule": {
+    "enabled": true,
+    "hour": 3,
+    "minute": 15,
+    "cycles_per_day": 1
+  }
+}
