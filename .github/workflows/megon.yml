@@ -1,0 +1,106 @@
+name: MEGON daily
+
+# MEGON's memory is committed to this repository, so a scheduled runner is
+# enough: each run restores memory, lets the kernel choose its own actions,
+# runs a learn cycle, and commits the grown memory back. No server, no device,
+# no card. Public repos get unlimited Actions minutes.
+
+on:
+  schedule:
+    - cron: '17 3 * * *'      # 03:17 UTC daily -- offset from the top of the hour
+  workflow_dispatch: {}        # ...or click "Run workflow" any time
+  push:
+    branches: [main]
+    paths: ['megon/**', 'megon.py']
+
+permissions:
+  contents: write              # needed so the kernel can commit its own memory
+
+concurrency:
+  group: megon-kernel          # never run two kernels against one memory
+  cancel-in-progress: false
+
+jobs:
+  learn:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install
+        run: pip install --quiet numpy scikit-learn beautifulsoup4 requests
+
+      # Identity first: the Self-development step commits mid-run, so git must
+      # already know who MEGON is before it does.
+      - name: Git identity
+        run: |
+          git config user.name  "megon-kernel"
+          git config user.email "megon-kernel@users.noreply.github.com"
+
+      - name: Initialise (no-op if memory already committed)
+        run: python megon.py init
+
+      - name: Skills (idempotent -- skips anything already verified)
+        run: |
+          python megon.py skill --seed
+          python megon.py skill --invent
+
+      # First run only: give it a syllabus before it develops curiosity.
+      - name: Bootstrap curriculum (first run)
+        run: |
+          if [ ! -f megon_home/.bootstrapped ]; then
+            python megon.py bootstrap || true
+            touch megon_home/.bootstrapped
+          fi
+
+      # The kernel decides for itself what to do. Budgeted, rate-limited,
+      # and every action lands in the audit log inside megon.db.
+      - name: Self-chosen actions
+        run: python megon.py agent --steps 12
+
+      - name: Learn cycle
+        run: python megon.py learn --mb 40 --docs 200 --minutes 25
+
+      - name: Learn from real open-source code
+        run: |
+          python megon.py learn-code "string utilities" "json helpers" "text processing" --repos 2 || true
+
+      # `agent --steps` explores; it does not self-develop. This step is what
+      # grows MEGON's own grammar and commits the new primitives.
+      - name: Self-development
+        run: python megon.py evolve --rounds 1
+
+      - name: Report
+        run: |
+          python megon.py evolve --stats
+          python megon.py status
+          python megon.py leaderboard | tail -8
+
+      # Guard: never let memory grow past what a free runner should carry.
+      - name: Size guard
+        run: |
+          SZ=$(du -sm megon_home | cut -f1)
+          echo "memory: ${SZ} MB"
+          if [ "$SZ" -gt 300 ]; then
+            echo "memory over 300 MB -- run: python megon.py reset --yes (or raise the cap)"
+          fi
+
+      - name: Commit memory
+        run: |
+          git add -f megon_home/megon.db megon_home/versions megon_home/skills \
+                  megon_home/extensions megon_home/.bootstrapped \
+                  megon_home/megon.json 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "nothing changed"
+          else
+            git commit -m "megon: cycle $(date -u +%F_%H%M)"
+            git pull --rebase --autostash origin "${GITHUB_REF_NAME}" || true
+            git push
+          fi
